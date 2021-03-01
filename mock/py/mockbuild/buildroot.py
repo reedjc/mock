@@ -394,7 +394,7 @@ class Buildroot(object):
     @noop_in_bootstrap
     def _fixup_build_user(self):
         """ensure chrootuser has correct UID"""
-        self.doChroot(['/usr/sbin/usermod', '-u', str(self.chrootuid),
+        self.doChroot(['/usr/sbin/usermod', '-u', str(self.chrootuid), '--non-unique',
                        self.chrootuser],
                       shell=False, nosync=True)
 
