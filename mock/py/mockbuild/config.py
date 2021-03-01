@@ -231,6 +231,7 @@ def setup_default_config_opts(unprivUid, version, pkgpythondir):
         'distgit_src_get': 'rpkg sources',
         'spec': 'SCM_PKG.spec',
         'ext_src_dir': os.devnull,
+        'src_dir_basename': '',
         'write_tar': False,
         'git_timestamps': False,
         'exclude_vcs': True,

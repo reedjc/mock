@@ -75,8 +75,10 @@ class scmWorker(object):
 
         self.spec = opts['spec']
         self.spec = self.spec.replace("SCM_PKG", self.pkg)
+        self.spec_orig = self.spec
 
         self.ext_src_dir = opts['ext_src_dir']
+        self.src_dir_basename = opts['src_dir_basename']
         self.write_tar = opts['write_tar']
         self.exclude_vcs = opts['exclude_vcs']
 
@@ -89,7 +91,10 @@ class scmWorker(object):
     @traceLog()
     def get_sources(self):
         self.wrk_dir = tempfile.mkdtemp(".mock-scm." + os.path.basename(self.pkg))
-        self.src_dir = self.wrk_dir + "/" + os.path.basename(self.pkg)
+        if (self.src_dir_basename):
+            self.src_dir = self.wrk_dir + "/" + self.src_dir_basename
+        else:
+            self.src_dir = self.wrk_dir + "/" + os.path.basename(self.pkg)
         self.log.debug("SCM checkout directory: %s", self.wrk_dir)
         try:
             util.do(shlex.split(self.get), shell=False, cwd=self.wrk_dir, env=os.environ)
@@ -174,7 +179,10 @@ class scmWorker(object):
 
         # Generate a tarball from the checked out sources if needed
         if str(self.write_tar).lower() == "true" and self.method != "distgit":
-            tardir = self.name + "-" + self.version
+            if (self.src_dir_basename):
+                tardir = self.src_dir_basename + "-" + self.version
+            else:
+                tardir = self.name + "-" + self.version
             if tarball is None:
                 tarball = tardir + ".tar.gz"
             taropts = ""
@@ -194,7 +202,10 @@ class scmWorker(object):
             self.log.debug("Writing %s/%s...", self.src_dir, tarball)
             cwd_dir = os.getcwd()
             os.chdir(self.wrk_dir)
-            os.rename(self.name, tardir)
+            if (self.src_dir_basename):
+                os.rename(self.src_dir_basename, tardir)
+            else:
+                os.rename(self.name, tardir)
             cmd = "{0} caf {1} {2} {3}".format(__tar_cmd, tarball, taropts, tardir)
             util.do(shlex.split(cmd), shell=False, cwd=self.wrk_dir, env=os.environ)
             os.rename(tarball, tardir + "/" + tarball)
@@ -209,6 +220,10 @@ class scmWorker(object):
                 shutil.copy2(self.ext_src_dir + "/" + f, self.src_dir + "/" + f)
 
         self.log.debug("Prepared sources for building src.rpm")
+
+        if (self.src_dir_basename):
+            self.spec = self.wrk_dir + "/" + self.name + "/" + self.spec_orig
+            self.src_dir = self.wrk_dir + "/" + self.name
 
         return (self.src_dir, self.spec)
 
